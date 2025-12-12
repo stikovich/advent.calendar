@@ -1,12 +1,10 @@
 services:
   - type: web
-    name: advent-calendar  # ← имя сервиса (можете изменить)
+    name: advent-calendar
     runtime: python
-    env: python
-    region: oregon
-    plan: free              # бесплатный тариф
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
+
