@@ -1,0 +1,72 @@
+<!-- templates/admin_submissions.html -->
+{% extends "index.html" %}
+{% block content %}
+<h2>📋 Задания на проверку</h2>
+
+{% if submissions %}
+<table>
+  <thead>
+    <tr>
+      <th>Пользователь</th>
+      <th>День</th>
+      <th>Задание</th>
+      <th>Тип</th>
+      <th>Файл/Текст</th>
+      <th>Баллы</th>
+      <th>Дата</th>
+      <th>Статус</th>
+      <th>Действие</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in submissions %}
+    <tr>
+      <td>{{ s.username }}</td>
+      <td>{{ s.day }}</td>
+      <td>{{ s.title }}</td>
+      <td>
+        {% if s.is_paid %}
+          <span style="color: #d32f2f;">💰 Платное</span>
+        {% else %}
+          🎁 Календарь
+        {% endif %}
+      </td>
+      <td>
+        {% if s.file_url %}
+          <a href="{{ url_for('static', filename=s.file_url) }}" target="_blank">📄 Посмотреть файл</a>
+        {% elif s.text_response %}
+          <div style="white-space: pre-wrap; max-width: 300px;">{{ s.text_response }}</div>
+        {% endif %}
+      </td>
+      <td>
+        {% if s.is_paid %}
+          +{{ s.points_free }} платных
+        {% else %}
+          +{{ s.points_free }} личных
+        {% endif %}
+        <br>+{{ s.points_global }} общих
+      </td>
+      <td>{{ s.submitted_at[:16] }}</td>
+      <td>
+        <span style="color:
+          {% if s.status == 'approved' %}#2e7d32
+          {% elif s.status == 'rejected' %}#c62828
+          {% else %}#ff6f00{% endif %};">
+          {{ "Одобрено" if s.status == 'approved' else "Отклонено" if s.status == 'rejected' else "Ожидает" }}
+        </span>
+      </td>
+      <td>
+        {% if s.status == 'pending' %}
+          <a href="/admin/approve/day/{{ s.id }}" class="btn" style="background: #4caf50; margin: 5px 0;">✅ Одобрить</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Нет заданий на проверку.</p>
+{% endif %}
+
+<a href="/admin" class="btn btn-outline">← Назад в админку</a>
+{% endblock %}

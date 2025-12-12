@@ -1,0 +1,283 @@
+<!-- templates/admin.html -->
+{% extends "index.html" %}
+{% block content %}
+
+<style>
+  .admin-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid #e0e0e0;
+  }
+
+  .card h3 {
+    margin-top: 0;
+    color: #2c3e50;
+    font-size: 1.2em;
+    font-weight: 600;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 8px;
+  }
+
+  .progress-bar {
+    height: 20px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0;
+    background: #4caf50;
+    transition: width 0.6s ease;
+    border-radius: 10px;
+  }
+
+  .status-cell {
+    text-align: center;
+    font-size: 18px;
+  }
+
+  .status-achieved {
+    color: #4caf50;
+  }
+
+  .status-pending {
+    color: #ccc;
+  }
+
+  .btn-sm {
+    padding: 6px 10px;
+    font-size: 13px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .btn-add {
+    background: #2e7d32;
+    color: white;
+  }
+
+  .btn-remove {
+    background: #c62828;
+    color: white;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+  }
+
+  th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+
+  th {
+    background: #f5f5f5;
+    color: #333;
+    font-weight: 600;
+  }
+
+  .form-inline {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  input[type="number"] {
+    padding: 6px 8px;
+    width: 80px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .flex {
+    display: flex;
+    gap: 16px;
+  }
+
+  .flex-1 {
+    flex: 1;
+  }
+</style>
+
+<div class="admin-container">
+
+  <!-- Заголовок -->
+  <h2>⚙️ Админ-панель</h2>
+  <p>Общий счёт: <strong>{{ global_points }}/2026</strong></p>
+
+  <!-- Управление общим счётом -->
+  <div class="flex">
+    <div class="card flex-1">
+      <h3>➕ Увеличить общий счёт</h3>
+      <form method="POST" action="/admin/add_global" class="form-inline">
+        <input type="number" name="points" placeholder="10" min="1" max="100" required>
+        <button type="submit" class="btn-sm btn-add">Добавить</button>
+      </form>
+    </div>
+
+    <div class="card flex-1">
+      <h3>➖ Снять с общего счёта</h3>
+      <form method="POST" action="/admin/remove_global" class="form-inline">
+        <input type="number" name="points" placeholder="10" min="1" required>
+        <button type="submit" class="btn-sm btn-remove">Снять</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Прогресс-бар командного счёта -->
+  <div class="card">
+    <h3>🌍 Прогресс команды</h3>
+    <div class="progress-bar">
+      <div class="progress-fill"
+           style="width: {{ [global_points * 100 / 2026, 100] | min | round(2) }}%;
+                  background: 
+                    {% if global_points < 1000 %}#f44336
+                    {% elif global_points < 1800 %}#ff9800
+                    {% else %}#4caf50{% endif %};">
+      </div>
+    </div>
+    <p style="color: #666; margin: 8px 0;">
+      <strong>{{ global_points }}/2026</strong> — цель: сертификат
+    </p>
+  </div>
+
+  <!-- Пользователи -->
+  <div class="card">
+    <h3>👥 Пользователи</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Пользователь</th>
+          <th>Открыто дней</th>
+          <th>Баллы</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{ user.username }}</td>
+          <td>{{ stats.get(user.username, {'total_opened': 0})['total_opened'] }}</td>
+          <td>{{ user_points.get(user.username, 0) }}</td>
+          <td>
+            <div style="display: flex; gap: 8px; flex-direction: column;">
+              <!-- Добавить -->
+              <form method="POST" action="/admin/add_user_points" class="form-inline">
+                <input type="hidden" name="user_id" value="{{ user.id }}">
+                <input type="number" name="points" value="10" min="1" max="100">
+                <button type="submit" class="btn-sm btn-add">+ Добавить</button>
+              </form>
+
+              <!-- Снять -->
+              <form method="POST" action="/admin/remove_user_points" class="form-inline">
+                <input type="hidden" name="user_id" value="{{ user.id }}">
+                <input type="number" name="points" value="10" min="1">
+                <button type="submit" class="btn-sm btn-remove">− Снять</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Личные призы -->
+  <div class="card">
+    <h3>🎯 Личные цели (по игрокам)</h3>
+    <p style="color: #666; font-size: 14px; margin: 0 0 12px;">Цели достигнуты, когда игрок набрал достаточно <strong>личных</strong> баллов</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Приз</th>
+          <th>Цель</th>
+          {% for user in users %}
+            <th>{{ user.username }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% set personal_rewards = [
+          {'name': 'Маленький', 'points': 575},
+          {'name': 'Средний', 'points': 1525},
+          {'name': 'Большой', 'points': 2026}
+        ] %}
+        {% for r in personal_rewards %}
+        <tr>
+          <td><strong>{{ r.name }}</strong></td>
+          <td style="color: #777;">{{ r.points }}</td>
+          {% for user in users %}
+            {% set total = user_points.get(user.username, 0) %}
+            <td class="status-cell">
+              {% if total >= r.points %}
+                <span class="status-achieved">✅</span>
+              {% else %}
+                <span class="status-pending">⬜</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Командные призы -->
+  <div class="card">
+    <h3>🌍 Командный приз: Сертификат</h3>
+    <p style="color: #666; font-size: 14px;">
+      Выдаётся всем, когда общий счёт достигнет <strong>2026</strong> баллов.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Игрок</th>
+          {% for user in users %}
+            <th>{{ user.username }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Цель достигнута?</strong></td>
+          {% for user in users %}
+            <td class="status-cell">
+              {% if global_points >= 2026 %}
+                <span class="status-achieved">✅</span>
+              {% else %}
+                <span class="status-pending">⬜</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Ссылки -->
+  <div style="text-align: center; margin: 24px 0;">
+    <a href="/admin/submissions" class="btn" style="background: #1976d2;">📋 Проверить задания</a>
+    <a href="/calendar" class="btn btn-outline" style="margin-left: 12px;">← Назад к календарю</a>
+  </div>
+
+</div>
+
+{% endblock %}

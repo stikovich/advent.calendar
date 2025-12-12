@@ -1,0 +1,51 @@
+<!-- templates/day.html -->
+{% extends "index.html" %}
+{% block content %}
+<h2>🎁 День {{ day }}: {{ task.title }}</h2>
+
+<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 16px;">
+  {{ task.content | safe }}
+</div>
+
+{% if task.image_url %}
+  <div style="text-align: center; margin: 20px 0;">
+    <img src="{{ task.image_url }}" alt="Фото дня" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+  </div>
+{% endif %}
+
+{% if task.is_paid %}
+  <div style="background: #fff3e0; padding: 15px; margin: 20px 0; border-radius: 8px; color: #ef6c00; font-weight: bold; text-align: center;">
+    💰 Это <strong>платное задание</strong>. За выполнение — платные баллы.
+  </div>
+{% endif %}
+
+<details style="margin: 15px 0; padding: 10px; border: 1px dashed #ccc; border-radius: 6px;">
+  <summary style="font-weight: 500; color: #1976d2;">💡 Подсказка</summary>
+  <p style="margin: 10px 0 0; font-size: 15px;">{{ task.hint }}</p>
+</details>
+
+<!-- Статус задания -->
+{% if submission %}
+  <div style="background: 
+    {% if submission.status == 'approved' %}#e8f5e9; color: #2e7d32
+    {% elif submission.status == 'rejected' %}#ffebee; color: #c62828
+    {% else %}#fff3e0; color: #ff6f00{% endif %};
+    padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: 500;">
+    ✅ <strong>Задание {{ "одобрено" if submission.status == 'approved' else "отклонено" if submission.status == 'rejected' else "ожидает проверки" }}</strong>
+  </div>
+{% else %}
+  <!-- Форма отправки -->
+  <form method="POST" enctype="multipart/form-data" style="max-width: 600px; margin: 20px auto; padding: 25px; background: #ffffff; border-radius: 16px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; border: 1px solid #e0e6ed;">
+    {% if task.response_type == 'file' %}
+      <p style="margin: 0 0 12px 0; color: #1a202c; font-size: 16px; font-weight: 500;">Прикрепите фото или видео выполнения задания:</p>
+      <input type="file" name="file" accept="image/*,video/*,.pdf,.txt" required style="width: 100%; padding: 14px; border: 2px dashed #90cdf4; border-radius: 12px; background: #ebf8ff; color: #2b6cb0; font-size: 15px; cursor: pointer; transition: all 0.3s ease;">
+    {% elif task.response_type == 'text' %}
+      <p style="margin: 0 0 12px 0; color: #1a202c; font-size: 16px; font-weight: 500;">Введите ответ:</p>
+      <textarea name="text" rows="4" cols="50" placeholder="Напишите ответ..." required style="width: 100%; padding: 14px; border: 2px solid #cbd5e0; border-radius: 12px; font-size: 16px; color: #2d3748; background: #ffffff; transition: all 0.3s ease; resize: vertical; min-height: 110px; box-sizing: border-box;"></textarea>
+    {% endif %}
+    <button type="submit" style="margin-top: 16px; width: 100%; padding: 14px; background: #2b6cb0; color: white; font-size: 17px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; transition: background 0.3s ease; letter-spacing: 0.8px;" onmouseover="this.style.background='#2c5282';" onmouseout="this.style.background='#2b6cb0';">Отправить</button>
+  </form>
+{% endif %}
+
+<a href="/calendar" class="btn btn-outline">← Назад к календарю</a>
+{% endblock %}

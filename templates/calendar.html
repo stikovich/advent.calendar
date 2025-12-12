@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Адвент-календарь (15 дек – 14 янв)</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h2>🎄 Адвент-календарь: 15 декабря – 14 января</h2>
+  <p>Привет, <strong>{{ user }}</strong>! Открывай двери по одной — только в свой черед!</p>
+
+  <!-- 📊 Прогресс и призы — единый блок -->
+  <div class="task" style="max-width: 700px; margin: 30px auto; padding: 20px; background: #f8f9fa; border-radius: 12px; border: 1px solid #e0e0e0;">
+    
+    <!-- 🌍 Общий прогресс -->
+    <h3>🌍 Общий прогресс команды: {{ global_total }}/2026</h3>
+    <progress value="{{ global_total }}" max="2026" style="width: 100%; height: 24px;"></progress>
+
+    <!-- 📈 Личный прогресс -->
+    <h3>👤 Ваш личный прогресс: {{ personal_total }}/2026</h3>
+    <progress value="{{ personal_total }}" max="2026" style="width: 100%; height: 24px;"></progress>
+
+    <!-- 🎯 Призы -->
+    <h3 style="margin-top: 25px; border-top: 1px solid #ddd; padding-top: 15px;">🎯 Награды за достижения</h3>
+
+    <!-- Личные призы -->
+    <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+      <thead>
+        <tr style="background: #1976d2; color: white; font-size: 14px;">
+          <th style="padding: 10px; text-align: left;">Приз (личный)</th>
+          <th style="padding: 10px; text-align: left; width: 100px;">Цель</th>
+          <th style="padding: 10px; width: 60px;">Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for reward in reward_targets.personal %}
+          {% set achieved = personal_total >= reward.points %}
+          <tr style="border-bottom: 1px dashed #eee;">
+            <td style="padding: 10px; font-weight: 500; color: #333;">{{ reward.name }}</td>
+            <td style="padding: 10px; color: #666;">{{ reward.points }}</td>
+            <td style="text-align: center;">
+              {% if achieved %}<span style="color: #4caf50; font-size: 20px;">✅</span>{% else %}<span style="color: #ccc;">⬜</span>{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Командные призы -->
+    <table style="width: 100%; border-collapse: collapse; margin: 25px 0 10px;">
+      <thead>
+        <tr style="background: #7b1fa2; color: white; font-size: 14px;">
+          <th style="padding: 10px; text-align: left;">Приз (команда)</th>
+          <th style="padding: 10px; text-align: left;">Цель</th>
+          <th style="padding: 10px; width: 60px;">Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for reward in reward_targets.global %}
+          {% set achieved = global_total >= reward.points %}
+          <tr style="border-bottom: 1px dashed #eee;">
+            <td style="padding: 10px; font-weight: 500; color: #333;">{{ reward.name }}</td>
+            <td style="padding: 10px; color: #666;">{{ reward.points }} общих</td>
+            <td style="text-align: center;">
+              {% if achieved %}<span style="color: #4caf50; font-size: 20px;">✅</span>{% else %}<span style="color: #ccc;">⬜</span>{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Подпись -->
+  <p style="text-align: center; color: #777; font-size: 14px; margin-top: 10px;">
+    ✅ — цель достигнута<br>
+    ⬜ — ещё не достигнута
+  </p>
+
+  <!-- Кнопка скачивания -->
+  <div class="download">
+    <button class="download-btn" onclick="downloadFile()">
+      💾 ВОЗВРАЩЕНИЕ?
+    </button>
+  </div>
+
+  <script>
+    function downloadFile() {
+      const fileURL = 'https://drive.google.com/file/d/10Xck2lGlbMAqgWJ13gIzjC_tsozqSSt-/view?usp=sharing';
+      const fileName = 'ПРЕДНАЧЕРТАННОСТЬ.rar';
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+
+  <!-- Календарь -->
+  <div class="calendar">
+    {% for item in calendar_days %}
+      <div class="door {% if can_open(item.day) %}open{% else %}locked{% endif %}">
+        <div>День {{ item.day }}</div>
+        <div class="date">{{ item.date }}</div>
+
+        {% if item.day in available_days %}
+          {% if item.day in opened_days %}
+            <span style="color: green;">Открыто ✅</span>
+          {% else %}
+            <form action="/open_day" method="post" style="display:inline;">
+              <input type="hidden" name="day" value="{{ item.day }}">
+              <a href="/day/{{ item.day }}" class="btn">Посмотреть задание</a>
+            </form>
+          {% endif %}
+        {% else %}
+          <span>🔒</span>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if is_admin %}
+    <p><a href="/admin">Перейти в админку</a></p>
+  {% endif %}
+
+  <div class="logout">
+    <a href="/logout">Выйти</a>
+  </div>
+</body>
+</html>
