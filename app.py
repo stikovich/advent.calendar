@@ -515,7 +515,7 @@ def admin():
         cursor.execute('''
             SELECT u.username, COUNT(p.day) as total_opened
             FROM users u
-            LEFT JOIN progress p ON u.id = p.user_id AND p.is_completed = 1
+            LEFT JOIN progress p ON u.id = p.user_id
             GROUP BY u.id, u.username
         ''')
         for row in cursor.fetchall():
@@ -539,9 +539,9 @@ def admin():
         stats=stats,
         user_points=user_points,
         global_points=global_points,
-        reward_targets=reward_targets  # ← передаём в шаблон
+        reward_targets=reward_targets
     )
-
+    
 @app.route('/admin/add_global', methods=['POST'])
 def add_global():
     if not session.get('is_admin'): return redirect(url_for('login'))
@@ -643,6 +643,7 @@ except Exception as e:
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
