@@ -313,7 +313,7 @@ def allowed_file(filename):
 @app.context_processor
 def inject_functions():
     return {
-        'can_open': can_open_door  # теперь можно использовать в шаблоне
+        'can_open': can_open_door,  # теперь можно использовать в шаблоне
         'now': datetime.now()  # чтобы использовать {{ now.year }}
     }
 
@@ -601,5 +601,6 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"⚠️ Не удалось инициализировать БД: {e}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
