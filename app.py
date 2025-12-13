@@ -1,11 +1,11 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-import sqlite3
-from datetime import datetime, timedelta
 import os
+import psycopg2
+from psycopg2.extras import DictCursor
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-import time
 
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'txt'}
@@ -596,5 +596,9 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
+    try:
+        init_db()
+    except Exception as e:
+        print(f"⚠️ Не удалось инициализировать БД: {e}")
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
