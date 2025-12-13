@@ -233,39 +233,21 @@ def add_to_global_points(points):
     finally:
         conn.close()
 
-def check_rewards(user_id, conn=None):
-    close_after = False
-    if conn is None:
-        conn = get_db()
-        close_after = True
-    try:
-        cursor = conn.cursor()
-
-        cursor.execute('SELECT free_points, paid_points FROM points WHERE user_id = %s', (user_id,))
-        row = cursor.fetchone()
-        personal_total = (row['free_points'] + row['paid_points']) if row else 0
-
-        cursor.execute('SELECT reward_type FROM rewards WHERE user_id = %s', (user_id,))
-        awarded = {r['reward_type'] for r in cursor.fetchall()}
-
-        # Призы за личные баллы
-        if personal_total >= 575 and 'small' not in awarded:
-            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (%s, %s, NOW())', (user_id, "small"))
-        elif personal_total >= 1525 and 'medium' not in awarded:
-            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (%s, %s, NOW())', (user_id, "medium"))
-        elif personal_total >= 2026 and 'large' not in awarded:
-            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (%s, %s, NOW())', (user_id, "large"))
-
-        # Общий счёт
-        current_global = get_global_points()
-
-        if current_global >= 2026 and 'certificate' not in awarded:
-            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (%s, %s, NOW())', (user_id, "certificate"))
-
-        conn.commit()
-    finally:
-        if close_after:
-            conn.close()
+def get_reward_targets():
+    return {
+        'personal': [
+            {'type': 'xalava', 'name': 'Бесплатная позиция в магазине из предложенных', 'points': 555},
+            {'type': 'small', 'name': 'Маленький приз', 'points': 1276},
+            {'type': 'merch', 'name': 'Брелок (мерч)', 'points': 1444},
+            {'type': 'medium', 'name': 'Средний приз', 'points': 1651},
+            {'type': 'large', 'name': 'Большой приз', 'points': 2026},
+        ],
+        'global': [
+            {'type': 'sale', 'name': 'Б/У Aegis Hero 2 за 999р', 'points': 226},
+            {'type': 'xalava', 'name': 'Скидка 50% в магазине', 'points': 777},
+            {'type': 'certificate', 'name': 'Секретный приз', 'points': 1013},
+        ]
+    }
 
 def get_reward_targets():
     return {
@@ -642,6 +624,7 @@ except Exception as e:
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
