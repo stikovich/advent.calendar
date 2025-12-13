@@ -172,10 +172,6 @@ def init_db():
         with sqlite3.connect('database.db') as conn:
             conn.execute('PRAGMA journal_mode=WAL;')
             cursor = conn.cursor()
-            # ... (ваши старые CREATE TABLE) — можно оставить как есть
-            # Или вызвать старый init_db
-            # Но лучше — оставить только PostgreSQL
-
 
 # --- Функции ---
 def get_global_points():
@@ -274,12 +270,16 @@ def check_rewards(user_id, conn=None):
 def get_reward_targets():
     return {
         'personal': [
-            {'type': 'small', 'name': 'Маленький приз', 'points': 575},
-            {'type': 'medium', 'name': 'Средний приз', 'points': 1525},
+            {'type': 'xalava', 'name': 'Бесплатная позиция в магазине из предложенных', 'points': 555},
+            {'type': 'small', 'name': 'Маленький приз', 'points': 1276},
+            {'type': 'merch', 'name': 'Брелок (мерч)', 'points': 1444},
+            {'type': 'medium', 'name': 'Средний приз', 'points': 1651},
             {'type': 'large', 'name': 'Большой приз', 'points': 2026},
         ],
         'global': [
-            {'type': 'certificate', 'name': 'Сертификат', 'points': 2026},
+            {'type': 'sale', 'name': 'Б/У Aegis Hero 2 за 999р', 'points': 226},
+            {'type': 'xalava', 'name': 'Скидка 50% в магазине', 'points': 777},
+            {'type': 'certificate', 'name': 'Секретный приз', 'points': 1013},
         ]
     }
 
@@ -642,5 +642,6 @@ except Exception as e:
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
