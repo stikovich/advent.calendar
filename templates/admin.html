@@ -201,6 +201,7 @@
   </div>
 
   <!-- Личные призы -->
+  <!-- Личные призы -->
   <div class="card">
     <h3>🎯 Личные цели (по игрокам)</h3>
     <p style="color: #666; font-size: 14px; margin: 0 0 12px;">Цели достигнуты, когда игрок набрал достаточно <strong>личных</strong> баллов</p>
@@ -215,14 +216,19 @@
         </tr>
       </thead>
       <tbody>
-        {% for r in reward_targets['personal'] %}
+        {% set personal_rewards = [
+          {'name': 'Маленький', 'points': 575},
+          {'name': 'Средний', 'points': 1525},
+          {'name': 'Большой', 'points': 2026}
+        ] %}
+        {% for r in personal_rewards %}
         <tr>
-          <td><strong>{{ r['name'] }}</strong></td>
-          <td style="color: #777;">{{ r['points'] }}</td>
+          <td><strong>{{ r.name }}</strong></td>
+          <td style="color: #777;">{{ r.points }}</td>
           {% for user in users %}
             {% set total = user_points.get(user.username, 0) %}
             <td class="status-cell">
-              {% if total >= r['points'] %}
+              {% if total >= r.points %}
                 <span class="status-achieved">✅</span>
               {% else %}
                 <span class="status-pending">⬜</span>
@@ -237,28 +243,25 @@
 
   <!-- Командные призы -->
   <div class="card">
-    <h3>🌍 Командные цели</h3>
+    <h3>🌍 Командный приз: Сертификат</h3>
     <p style="color: #666; font-size: 14px;">
-      Призы, которые разблокируются при достижении определённого <strong>общего</strong> счёта.
+      Выдаётся всем, когда общий счёт достигнет <strong>2026</strong> баллов.
     </p>
     <table>
       <thead>
         <tr>
-          <th>Приз</th>
-          <th>Цель</th>
+          <th>Игрок</th>
           {% for user in users %}
             <th>{{ user.username }}</th>
           {% endfor %}
         </tr>
       </thead>
       <tbody>
-        {% for r in reward_targets['global'] %}
         <tr>
-          <td><strong>{{ r['name'] }}</strong></td>
-          <td style="color: #777;">{{ r['points'] }}</td>
+          <td><strong>Цель достигнута?</strong></td>
           {% for user in users %}
             <td class="status-cell">
-              {% if global_points >= r['points'] %}
+              {% if global_points >= 2026 %}
                 <span class="status-achieved">✅</span>
               {% else %}
                 <span class="status-pending">⬜</span>
@@ -266,11 +269,10 @@
             </td>
           {% endfor %}
         </tr>
-        {% endfor %}
       </tbody>
     </table>
   </div>
-  
+
   <!-- Ссылки -->
   <div style="text-align: center; margin: 24px 0;">
     <a href="/admin/submissions" class="btn" style="background: #1976d2;">📋 Проверить задания</a>
@@ -280,5 +282,6 @@
 </div>
 
 {% endblock %}
+
 
 
