@@ -268,7 +268,6 @@ def check_rewards(user_id, conn=None):
         if close_after:
             conn.close()
 
-
 def get_reward_targets():
     return {
         'personal': [
@@ -315,6 +314,7 @@ def allowed_file(filename):
 def inject_functions():
     return {
         'can_open': can_open_door  # теперь можно использовать в шаблоне
+        'now': datetime.now()  # чтобы использовать {{ now.year }}
     }
 
 # --- Маршруты ---
@@ -601,4 +601,5 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"⚠️ Не удалось инициализировать БД: {e}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
