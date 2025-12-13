@@ -11,13 +11,5 @@ services:
         value: app.py
       - key: FLASK_ENV
         value: production
-    envVarSecrets:
       - key: DATABASE_URL
-        fromDatabase:
-          name: advent-calendar-db
-          property: connectionString
-
-databases:
-  - name: advent-calendar-db
-    type: postgres
-    plan: free
+        fromSecret: DATABASE_URL  # ← теперь это secret, а не fromDatabase
