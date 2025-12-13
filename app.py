@@ -14,48 +14,45 @@ app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# --- Функция безопасного подключения ---
 def get_db():
-    for _ in range(5):
-        try:
-            conn = sqlite3.connect('database.db', timeout=20)
-            conn.execute('PRAGMA journal_mode=WAL;')
-            return conn
-        except sqlite3.OperationalError:
-            time.sleep(1)
-    raise Exception("Не удалось подключиться к базе данных")
+    if 'DATABASE_URL' in os.environ:
+        # На Render или Heroku — PostgreSQL
+        conn = psycopg2.connect(os.environ['DATABASE_URL'], cursor_factory=DictCursor)
+        conn.set_session(autocommit=True)
+    else:
+        # Локально — SQLite
+        import sqlite3
+        conn = sqlite3.connect('database.db', timeout=20)
+        conn.row_factory = sqlite3.Row
+        conn.execute('PRAGMA journal_mode=WAL;')
+    return conn
 
 # --- Инициализация БД ---
 def init_db():
-    with sqlite3.connect('database.db') as conn:
-        conn.execute('PRAGMA journal_mode=WAL;')
+    if 'DATABASE_URL' in os.environ:
+        # Работаем с PostgreSQL
+        conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cursor = conn.cursor()
 
-        # --- users ---
+        # Создание таблиц
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
                 is_admin INTEGER DEFAULT 0
             )
         ''')
-        cols = [col[1] for col in cursor.execute("PRAGMA table_info(users)").fetchall()]
-        if 'is_admin' not in cols:
-            cursor.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0")
 
-        # --- progress ---
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS progress (
                 user_id INTEGER,
                 day INTEGER,
-                opened_at TEXT,
-                PRIMARY KEY (user_id, day),
-                FOREIGN KEY (user_id) REFERENCES users (id)
+                opened_at TIMESTAMP,
+                PRIMARY KEY (user_id, day)
             )
         ''')
 
-        # --- tasks ---
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS tasks (
                 day INTEGER PRIMARY KEY,
@@ -67,72 +64,55 @@ def init_db():
                 is_published INTEGER DEFAULT 0,
                 points_free INTEGER DEFAULT 0,
                 points_global INTEGER DEFAULT 0,
-                is_paid INTEGER DEFAULT 0
+                is_paid INTEGER DEFAULT 0,
+                response_type TEXT DEFAULT 'file'
             )
         ''')
-        cols = [col[1] for col in cursor.execute("PRAGMA table_info(tasks)").fetchall()]
-        for col, type in [('points_free', 'INTEGER DEFAULT 0'),
-                          ('points_global', 'INTEGER DEFAULT 0'),
-                          ('is_paid', 'INTEGER DEFAULT 0')]:
-            if col not in cols:
-                cursor.execute(f"ALTER TABLE tasks ADD COLUMN {col} {type}")
 
-        # В init_db(), после создания таблицы tasks
-        cols = [col[1] for col in cursor.execute("PRAGMA table_info(tasks)").fetchall()]
-        if 'response_type' not in cols:
-            cursor.execute("ALTER TABLE tasks ADD COLUMN response_type TEXT DEFAULT 'file'")
-
-        # --- points ---
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS points (
                 user_id INTEGER PRIMARY KEY,
                 free_points INTEGER DEFAULT 0,
-                paid_points INTEGER DEFAULT 0,
-                FOREIGN KEY (user_id) REFERENCES users (id)
+                paid_points INTEGER DEFAULT 0
             )
         ''')
 
-        # --- submissions_day ---
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS submissions_day (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 user_id INTEGER,
                 day INTEGER,
                 file_url TEXT,
-                submitted_at TEXT,
-                status TEXT DEFAULT 'pending',
-                FOREIGN KEY (user_id) REFERENCES users (id)
+                text_response TEXT,
+                submitted_at TIMESTAMP,
+                status TEXT DEFAULT 'pending'
             )
         ''')
 
-        # После создания таблицы submissions_day
-        cols = [col[1] for col in cursor.execute("PRAGMA table_info(submissions_day)").fetchall()]
-        if 'text_response' not in cols:
-            cursor.execute("ALTER TABLE submissions_day ADD COLUMN text_response TEXT")
-
-
-        # --- rewards ---
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS rewards (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 user_id INTEGER,
                 reward_type TEXT,
-                awarded_at TEXT,
-                FOREIGN KEY (user_id) REFERENCES users (id)
+                awarded_at TIMESTAMP
             )
         ''')
 
-        # --- global_progress ---
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS global_progress (
                 id INTEGER PRIMARY KEY CHECK (id = 1),
                 total_points INTEGER DEFAULT 0
             )
         ''')
-        if cursor.execute('SELECT 1 FROM global_progress WHERE id = 1').fetchone() is None:
-            cursor.execute('INSERT INTO global_progress (id, total_points) VALUES (1, 0)')
 
-        # --- Примеры заданий ---
+        # Вставка начального значения
+        cursor.execute('''
+            INSERT INTO global_progress (id, total_points)
+            VALUES (1, 0)
+            ON CONFLICT (id) DO NOTHING
+        ''')
+
+        # Примеры заданий
         sample_tasks = [
             (1, 'Вопросики', 'Ответьте на вопросы:', 'Вспомните 1 квест.', None, None, 1, 30, 5, 0, 'text'),
             (2, 'Письмо', 'Напишите письмо деду морозу.', 'Он существует!', None, None, 1, 20, 5, 0, 'text'),
@@ -169,42 +149,65 @@ def init_db():
 
         for task in sample_tasks:
             cursor.execute('''
-                INSERT OR REPLACE INTO tasks 
+                INSERT INTO tasks 
                 (day, title, content, hint, image_url, video_url, is_published, points_free, points_global, is_paid, response_type)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (day) DO UPDATE SET
+                title = EXCLUDED.title,
+                content = EXCLUDED.content
             ''', task)
 
-        # --- Админ ---
-        if cursor.execute('SELECT 1 FROM users WHERE username = ?', ('admin',)).fetchone() is None:
-            hashed = generate_password_hash('22551bdg')
-            cursor.execute('INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)', ('admin', hashed, 1))
+        # Админ
+        cursor.execute('''
+            INSERT INTO users (username, password, is_admin)
+            VALUES ('admin', %s, 1)
+            ON CONFLICT (username) DO NOTHING
+        ''', (generate_password_hash('22551bdg'),))
 
         conn.commit()
+        conn.close()
+
+    else:
+        # Локально — SQLite (как раньше)
+        with sqlite3.connect('database.db') as conn:
+            conn.execute('PRAGMA journal_mode=WAL;')
+            cursor = conn.cursor()
+            # ... (ваши старые CREATE TABLE) — можно оставить как есть
+            # Или вызвать старый init_db
+            # Но лучше — оставить только PostgreSQL
+
 
 # --- Функции ---
 def get_global_points():
-    with sqlite3.connect('database.db', timeout=10) as conn:
+    conn = get_db()
+    try:
         cursor = conn.cursor()
         cursor.execute('SELECT total_points FROM global_progress WHERE id = 1')
-        return cursor.fetchone()[0]
+        row = cursor.fetchone()
+        return row['total_points'] if row else 0
+    finally:
+        conn.close()
 
 def get_user_points(user_id):
     if not user_id:
         return 0, 0
-    with sqlite3.connect('database.db', timeout=10) as conn:
+    conn = get_db()
+    try:
         cursor = conn.cursor()
-        cursor.execute('SELECT free_points, paid_points FROM points WHERE user_id = ?', (user_id,))
+        cursor.execute('SELECT free_points, paid_points FROM points WHERE user_id = %s', (user_id,))
         row = cursor.fetchone()
-        return (row[0], row[1]) if row else (0, 0)
+        return (row['free_points'], row['paid_points']) if row else (0, 0)
+    finally:
+        conn.close()
 
 def add_points(user_id, free_points, paid_points):
     conn = get_db()
     try:
         cursor = conn.cursor()
-        cursor.execute('SELECT free_points, paid_points FROM points WHERE user_id = ?', (user_id,))
+        cursor.execute('SELECT free_points, paid_points FROM points WHERE user_id = %s', (user_id,))
         row = cursor.fetchone()
         if row:
-            current_free, current_paid = row
+            current_free, current_paid = row['free_points'], row['paid_points']
         else:
             current_free, current_paid = 0, 0
 
@@ -212,8 +215,10 @@ def add_points(user_id, free_points, paid_points):
         new_paid = min(1001, current_paid + paid_points)
 
         cursor.execute('''
-            INSERT OR REPLACE INTO points (user_id, free_points, paid_points)
-            VALUES (?, ?, ?)
+            INSERT INTO points (user_id, free_points, paid_points)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (user_id) DO UPDATE
+            SET free_points = EXCLUDED.free_points, paid_points = EXCLUDED.paid_points
         ''', (user_id, new_free, new_paid))
         conn.commit()
 
@@ -224,10 +229,10 @@ def add_points(user_id, free_points, paid_points):
 def add_to_global_points(points):
     conn = get_db()
     try:
-        current = get_global_points()
+        current = get_global_points()  # уже с get_db()
         new_total = min(2026, current + points)
         cursor = conn.cursor()
-        cursor.execute('UPDATE global_progress SET total_points = ? WHERE id = 1', (new_total,))
+        cursor.execute('UPDATE global_progress SET total_points = %s WHERE id = 1', (new_total,))
         conn.commit()
     finally:
         conn.close()
@@ -240,28 +245,26 @@ def check_rewards(user_id, conn=None):
     try:
         cursor = conn.cursor()
 
-        # --- Личные баллы ---
-        cursor.execute('SELECT free_points, paid_points FROM points WHERE user_id = ?', (user_id,))
+        cursor.execute('SELECT free_points, paid_points FROM points WHERE user_id = %s', (user_id,))
         row = cursor.fetchone()
-        personal_total = (row[0] + row[1]) if row else 0
+        personal_total = (row['free_points'] + row['paid_points']) if row else 0
 
-        cursor.execute('SELECT reward_type FROM rewards WHERE user_id = ?', (user_id,))
-        awarded = {row[0] for row in cursor.fetchall()}
+        cursor.execute('SELECT reward_type FROM rewards WHERE user_id = %s', (user_id,))
+        awarded = {r['reward_type'] for r in cursor.fetchall()}
 
         # Призы за личные баллы
         if personal_total >= 575 and 'small' not in awarded:
-            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (?, "small", datetime("now"))', (user_id,))
+            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (%s, %s, NOW())', (user_id, "small"))
         elif personal_total >= 1525 and 'medium' not in awarded:
-            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (?, "medium", datetime("now"))', (user_id,))
+            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (%s, %s, NOW())', (user_id, "medium"))
         elif personal_total >= 2026 and 'large' not in awarded:
-            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (?, "large", datetime("now"))', (user_id,))
+            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (%s, %s, NOW())', (user_id, "large"))
 
-        # --- Общий счёт (глобальный) ---
+        # Общий счёт
         current_global = get_global_points()
 
-        # Призы, которые зависят от общего счёта (командные)
         if current_global >= 2026 and 'certificate' not in awarded:
-            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (?, "certificate", datetime("now"))', (user_id,))
+            cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (%s, %s, NOW())', (user_id, "certificate"))
 
         conn.commit()
     finally:
@@ -280,15 +283,18 @@ def get_reward_targets():
         ]
     }
 
-
 def mark_day_as_opened(user_id, day):
-    with sqlite3.connect('database.db', timeout=10) as conn:
+    conn = get_db()
+    try:
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT OR IGNORE INTO progress (user_id, day, opened_at)
-            VALUES (?, ?, datetime('now'))
+            INSERT INTO progress (user_id, day, opened_at)
+            VALUES (%s, %s, NOW())
+            ON CONFLICT (user_id, day) DO NOTHING
         ''', (user_id, day))
         conn.commit()
+    finally:
+        conn.close()
 
 def can_open_door(day):
     if day < 1 or day > 24:
@@ -338,12 +344,16 @@ def calendar():
     personal_total = free + paid
     global_total = get_global_points()
 
-    with sqlite3.connect('database.db', timeout=10) as conn:
+    conn = get_db()
+    try:
         cursor = conn.cursor()
-        cursor.execute('SELECT day FROM progress WHERE user_id = ?', (user_id,))
-        opened_days = {row[0] for row in cursor.fetchall()}
-        cursor.execute('SELECT reward_type FROM rewards WHERE user_id = ?', (user_id,))
-        awarded_rewards = {row[0] for row in cursor.fetchall()}
+        cursor.execute('SELECT day FROM progress WHERE user_id = %s', (user_id,))
+        opened_days = {row['day'] for row in cursor.fetchall()}
+
+        cursor.execute('SELECT reward_type FROM rewards WHERE user_id = %s', (user_id,))
+        awarded_rewards = {row['reward_type'] for row in cursor.fetchall()}
+    finally:
+        conn.close()
 
     # Доступные дни
     now = datetime.now().date()
@@ -380,10 +390,10 @@ def view_day(day):
     if not user_id:
         return redirect(url_for('login'))
 
-    with sqlite3.connect('database.db', timeout=10) as conn:
-        conn.row_factory = sqlite3.Row
+    conn = get_db()
+    try:
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM tasks WHERE day = ? AND is_published = 1', (day,))
+        cursor.execute('SELECT * FROM tasks WHERE day = %s AND is_published = 1', (day,))
         task = cursor.fetchone()
         if not task:
             flash('Задание не опубликовано.')
@@ -392,8 +402,10 @@ def view_day(day):
             flash('День ещё не наступил.')
             return redirect(url_for('calendar'))
 
-        cursor.execute('SELECT status FROM submissions_day WHERE user_id = ? AND day = ?', (user_id, day))
+        cursor.execute('SELECT status FROM submissions_day WHERE user_id = %s AND day = %s', (user_id, day))
         submission = cursor.fetchone()
+    finally:
+        conn.close()
 
     if request.method == 'POST':
         if submission:
@@ -419,12 +431,11 @@ def view_day(day):
                 if not text_response:
                     flash('Введите ответ.')
                     return redirect(url_for('view_day', day=day))
-
-            # Сохраняем
+                
             cursor = conn.cursor()
             cursor.execute('''
                 INSERT INTO submissions_day (user_id, day, file_url, text_response, submitted_at, status)
-                VALUES (?, ?, ?, ?, datetime('now'), 'pending')
+                VALUES (%s, %s, %s, %s, NOW(), 'pending')
             ''', (user_id, day, file_url, text_response))
             conn.commit()
             flash('Ответ отправлен на проверку.')
@@ -445,8 +456,8 @@ def admin_submissions():
         return redirect(url_for('login'))
     
     submissions = []
-    with sqlite3.connect('database.db', timeout=10) as conn:
-        conn.row_factory = sqlite3.Row
+    conn = get_db()
+    try:
         cursor = conn.cursor()
         cursor.execute('''
             SELECT s.id, s.user_id, s.day, s.file_url, s.text_response, s.submitted_at, s.status,
@@ -457,28 +468,30 @@ def admin_submissions():
             ORDER BY s.submitted_at DESC
         ''')
         submissions = cursor.fetchall()
+    finally:
+        conn.close()
     
     return render_template('admin_submissions.html', submissions=submissions)
 
 @app.route('/admin/approve/day/<int:sub_id>')
 def approve_day_submission(sub_id):
     if not session.get('is_admin'): return redirect(url_for('login'))
+    
     conn = get_db()
     try:
-        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('''
             SELECT s.id, s.user_id, s.day, t.points_free, t.points_global, t.is_paid
             FROM submissions_day s
             JOIN tasks t ON s.day = t.day
-            WHERE s.id = ? AND s.status = 'pending'
+            WHERE s.id = %s AND s.status = 'pending'
         ''', (sub_id,))
         sub = cursor.fetchone()
         if not sub:
             flash('Задание уже обработано.')
             return redirect(url_for('admin_submissions'))
 
-        cursor.execute('UPDATE submissions_day SET status = "approved" WHERE id = ?', (sub_id,))
+        cursor.execute('UPDATE submissions_day SET status = %s WHERE id = %s', ('approved', sub_id))
         conn.commit()
 
         if sub['is_paid']:
@@ -501,22 +514,32 @@ def approve_day_submission(sub_id):
 @app.route('/admin')
 def admin():
     if not session.get('is_admin'): flash('Доступ запрещён.'); return redirect(url_for('login'))
-    with sqlite3.connect('database.db', timeout=10) as conn:
-        conn.row_factory = sqlite3.Row
+    
+    users = []
+    stats = {}
+    user_points = {}
+
+    conn = get_db()
+    try:
         cursor = conn.cursor()
+
         cursor.execute('SELECT id, username FROM users ORDER BY username')
         users = cursor.fetchall()
+
         cursor.execute('SELECT u.username, p.day FROM users u LEFT JOIN progress p ON u.id = p.user_id')
-        stats = {}
         for row in cursor.fetchall():
             name = row['username']
             if name not in stats: stats[name] = {'total_opened': 0}
             if row['day']: stats[name]['total_opened'] += 1
-        user_points = {}
+
         for user in users:
             free, paid = get_user_points(user['id'])
             user_points[user['username']] = free + paid
+    finally:
+        conn.close()
+
     return render_template('admin.html', users=users, stats=stats, global_points=get_global_points(), user_points=user_points)
+
 
 @app.route('/admin/add_global', methods=['POST'])
 def add_global():
@@ -540,12 +563,17 @@ def remove_global():
     if not session.get('is_admin'): return redirect(url_for('login'))
     points = int(request.form['points'])
     current = get_global_points()
-    if points > current: flash(f'❌ Нельзя снять {points} (всего: {current})')
+    if points > current:
+        flash(f'❌ Нельзя снять {points} (всего: {current})')
     else:
-        with sqlite3.connect('database.db', timeout=10) as conn:
+        conn = get_db()
+        try:
             cursor = conn.cursor()
-            cursor.execute('UPDATE global_progress SET total_points = ? WHERE id = 1', (max(0, current - points),))
-        flash(f'✅ Снято {points} из общего счёта')
+            cursor.execute('UPDATE global_progress SET total_points = %s WHERE id = 1', (max(0, current - points),))
+            conn.commit()
+            flash(f'✅ Снято {points} из общего счёта')
+        finally:
+            conn.close()
     return redirect(url_for('admin'))
 
 @app.route('/admin/remove_user_points', methods=['POST'])
@@ -568,12 +596,19 @@ def register():
         username = request.form['username']
         password = request.form['password']
         hashed = generate_password_hash(password)
+        conn = get_db()
         try:
-            with sqlite3.connect('database.db', timeout=10) as conn:
-                conn.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, hashed))
+            cursor = conn.cursor()
+            cursor.execute('INSERT INTO users (username, password) VALUES (%s, %s)', (username, hashed))
+            conn.commit()
             flash('Регистрация успешна!')
             return redirect(url_for('login'))
-        except sqlite3.IntegrityError: flash('Имя занято.')
+        except psycopg2.IntegrityError:  # PostgreSQL
+            flash('Имя занято.')
+        except sqlite3.IntegrityError:  # SQLite (локально)
+            flash('Имя занято.')
+        finally:
+            conn.close()
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -581,13 +616,17 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        with sqlite3.connect('database.db', timeout=10) as conn:
-            conn.row_factory = sqlite3.Row
-            user = conn.execute('SELECT id, username, password, is_admin FROM users WHERE username = ?', (username,)).fetchone()
+        conn = get_db()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('SELECT id, username, password, is_admin FROM users WHERE username = %s', (username,))
+            user = cursor.fetchone()
             if user and check_password_hash(user['password'], password):
                 session.update(user_id=user['id'], username=user['username'], is_admin=bool(user['is_admin']))
                 return redirect(url_for('calendar'))
             flash('Ошибка входа.')
+        finally:
+            conn.close()
     return render_template('login.html')
 
 @app.route('/logout')
@@ -601,6 +640,3 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"⚠️ Не удалось инициализировать БД: {e}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-
-
-
