@@ -495,8 +495,10 @@ def approve_day_submission(sub_id):
 
 @app.route('/admin')
 def admin():
-    if not session.get('is_admin'): flash('Доступ запрещён.'); return redirect(url_for('login'))
-    
+    if not session.get('is_admin'):
+        flash('Доступ запрещён.')
+        return redirect(url_for('login'))
+
     users = []
     stats = {}
     user_points = {}
@@ -505,22 +507,40 @@ def admin():
     try:
         cursor = conn.cursor()
 
+        # Получаем всех пользователей
         cursor.execute('SELECT id, username FROM users ORDER BY username')
         users = cursor.fetchall()
 
-        cursor.execute('SELECT u.username, p.day FROM users u LEFT JOIN progress p ON u.id = p.user_id')
+        # Статистика: сколько дней открыл каждый
+        cursor.execute('''
+            SELECT u.username, COUNT(p.day) as total_opened
+            FROM users u
+            LEFT JOIN progress p ON u.id = p.user_id AND p.is_completed = 1
+            GROUP BY u.id, u.username
+        ''')
         for row in cursor.fetchall():
-            name = row['username']
-            if name not in stats: stats[name] = {'total_opened': 0}
-            if row['day']: stats[name]['total_opened'] += 1
+            stats[row['username']] = {'total_opened': row['total_opened']}
 
+        # Личные баллы
         for user in users:
             free, paid = get_user_points(user['id'])
             user_points[user['username']] = free + paid
+
     finally:
         conn.close()
 
-    return render_template('admin.html', users=users, stats=stats, global_points=get_global_points(), user_points=user_points)
+    # Получаем актуальные цели призов
+    reward_targets = get_reward_targets()
+    global_points = get_global_points()
+
+    return render_template(
+        'admin.html',
+        users=users,
+        stats=stats,
+        user_points=user_points,
+        global_points=global_points,
+        reward_targets=reward_targets  # ← передаём в шаблон
+    )
 
 @app.route('/admin/add_global', methods=['POST'])
 def add_global():
@@ -623,6 +643,7 @@ except Exception as e:
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
