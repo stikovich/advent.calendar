@@ -8,6 +8,34 @@
   <h2>🎄 Адвент-календарь: 15 декабря – 14 января</h2>
   <p>Привет, <strong>{{ user }}</strong>! Открывай двери по одной — только в свой черед!</p>
 
+  
+<button id="themeToggle" class="theme-toggle" title="Переключить тему">🌙</button>
+
+<script>
+  const themeToggle = document.getElementById('themeToggle');
+  const body = document.body;
+
+  // Проверяем сохранённую тему
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    body.classList.add('dark-theme');
+    themeToggle.textContent = '☀️';
+  }
+
+  // Переключение
+  themeToggle.addEventListener('click', () => {
+    body.classList.toggle('dark-theme');
+
+    if (body.classList.contains('dark-theme')) {
+      localStorage.setItem('theme', 'dark');
+      themeToggle.textContent = '☀️';
+    } else {
+      localStorage.setItem('theme', 'light');
+      themeToggle.textContent = '🌙';
+    }
+  });
+</script>
+
   <!-- 📊 Прогресс и призы — единый блок -->
   <div class="task" style="max-width: 700px; margin: 30px auto; padding: 20px; background: #f8f9fa; border-radius: 12px; border: 1px solid #e0e0e0;">
     
@@ -127,3 +155,4 @@
   </div>
 </body>
 </html>
+
