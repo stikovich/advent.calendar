@@ -431,7 +431,6 @@ def view_day(day):
 
     return render_template('day.html', task=task, day=day, submission=submission)
 
-
 @app.route('/admin/submissions')
 def admin_submissions():
     if not session.get('is_admin'): 
@@ -449,7 +448,14 @@ def admin_submissions():
             JOIN tasks t ON s.day = t.day
             ORDER BY s.submitted_at DESC
         ''')
-        submissions = cursor.fetchall()
+        raw_submissions = cursor.fetchall()
+        
+        # Конвертируем submitted_at в строку
+        for sub in raw_submissions:
+            sub['submitted_at_str'] = sub['submitted_at'].strftime('%Y-%m-%d %H:%M') if sub['submitted_at'] else '-'
+        
+        submissions = raw_submissions
+        
     finally:
         conn.close()
     
@@ -643,6 +649,7 @@ except Exception as e:
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
