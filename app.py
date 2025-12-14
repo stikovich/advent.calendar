@@ -450,12 +450,16 @@ def admin_submissions():
         ''')
         raw_submissions = cursor.fetchall()
         
-        # Конвертируем submitted_at в строку
-        for sub in raw_submissions:
-            sub['submitted_at_str'] = sub['submitted_at'].strftime('%Y-%m-%d %H:%M') if sub['submitted_at'] else '-'
-        
-        submissions = raw_submissions
-        
+        # Преобразуем каждую строку в обычный dict и добавляем formatted date
+        submissions = []
+        for row in raw_submissions:
+            sub = dict(row)  # ✅ Превращаем DictRow в обычный словарь
+            sub['submitted_at_str'] = (
+                row['submitted_at'].strftime('%Y-%m-%d %H:%M') 
+                if row['submitted_at'] else '-'
+            )
+            submissions.append(sub)
+            
     finally:
         conn.close()
     
@@ -649,6 +653,7 @@ except Exception as e:
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
