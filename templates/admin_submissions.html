@@ -46,7 +46,7 @@
         {% endif %}
         <br>+{{ s.points_global }} общих
       </td>
-      <td>{{ s.submitted_at[:16] }}</td>
+      <td>{{ s.submitted_at_str }}</td>
       <td>
         <span style="color:
           {% if s.status == 'approved' %}#2e7d32
@@ -70,4 +70,5 @@
 
 <a href="/admin" class="btn btn-outline">← Назад в админку</a>
 {% endblock %}
+
 
