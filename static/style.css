@@ -355,3 +355,70 @@ a[href="/admin"]:hover {
   .flex-1 {
     flex: 1;
   }
+
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #f0f0f0;
+    color: #333;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .theme-toggle:hover {
+    background: #e0e0e0;
+  }
+
+  .dark-theme .theme-toggle {
+    background: #616161;
+    color: #fff;
+  }
+
+  /* Тёмная тема */
+  .dark-theme {
+    background: #121212;
+    color: #e0e0e0;
+  }
+
+  .dark-theme a {
+    color: #bb86fc;
+  }
+
+  .dark-theme .card,
+  .dark-theme table,
+  .dark-theme input,
+  .dark-theme .form-inline {
+    background: #1e1e1e;
+    border-color: #333;
+    color: #fff;
+  }
+
+  .dark-theme th {
+    background: #2d2d2d !important;
+    color: #eee;
+  }
+
+  .dark-theme hr {
+    border-color: #333;
+  }
+
+  .dark-theme .btn, 
+  .dark-theme .btn-sm {
+    background: #6200ea;
+    color: white;
+  }
+
+  .dark-theme .status-pending {
+    color: #666;
+  }
