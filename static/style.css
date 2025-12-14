@@ -483,14 +483,15 @@ a[href="/admin"]:hover {
 }
 
 /* ==================== */
-/* 16. Тёмная тема */
+/* 16. Тёмная тема — Полная, Гармоничная, Работающая */
 /* ==================== */
 
 .dark-theme {
   background: var(--bg-dark);
-  color: #e0e0e0;
+  color: var(--text);
 }
 
+/* Ссылки */
 .dark-theme a {
   color: var(--secondary-light);
   text-decoration: none;
@@ -501,63 +502,93 @@ a[href="/admin"]:hover {
   text-decoration: underline;
 }
 
-/* Панели и карточки */
+/* Карточки, блоки, контейнеры */
 .dark-theme .card,
-.dark-theme .admin-container,
 .dark-theme .task,
 .dark-theme .door,
-.dark-theme table,
+.dark-theme .admin-container,
 .dark-theme main,
 .dark-theme header,
+.card .dark-theme,
 .dark-theme .form-inline,
-.dark-theme .btn,
-.dark-theme .download-btn {
-  background: var(--bg-panel);
-  border-color: var(--border-dark);
-  color: #f0f0f0;
+.dark-theme .flex,
+.dark-theme .download {
+  background: var(--bg-panel) !important;
+  border-color: var(--border-dark) !important;
+  color: var(--text) !important;
 }
 
 /* Таблицы */
-.dark-theme th {
-  background: #3c3c3c !important;
-  color: #fff;
+.dark-theme table {
+  background: var(--bg-panel);
+  color: var(--text);
 }
 
-.dark-theme td {
+.dark-theme th,
+.dark-theme .card th {
+  background: #3c3c3c !important;
+  color: #fff;
   border-bottom: 1px solid var(--border-dark);
+}
+
+.dark-theme td,
+.dark-theme .card td {
+  border-bottom: 1px solid var(--border-dark);
+  color: var(--text);
 }
 
 /* Формы */
 .dark-theme input,
 .dark-theme textarea,
-.dark-theme select {
-  background: #333;
-  color: #fff;
-  border-color: #555;
+.dark-theme select,
+.dark-theme input[type="text"],
+.dark-theme input[type="number"] {
+  background: #333 !important;
+  color: #fff !important;
+  border-color: #555 !important;
 }
 
 .dark-theme input:focus,
 .dark-theme textarea:focus {
-  border-color: var(--secondary-light);
-  box-shadow: 0 0 0 2px rgba(149, 117, 205, 0.3);
+  border-color: var(--secondary-light) !important;
+  box-shadow: 0 0 0 2px rgba(149, 117, 205, 0.3) !important;
 }
 
 /* Кнопки */
 .dark-theme .btn,
 .dark-theme .btn-sm,
-.dark-theme .download-btn {
-  background: var(--secondary);
+.dark-theme .download-btn,
+.dark-theme .btn-add,
+.dark-theme .btn-remove {
+  background: var(--secondary) !important;
+  color: white !important;
+  border: none !important;
 }
 
 .dark-theme .btn:hover,
 .dark-theme .btn-sm:hover,
 .dark-theme .download-btn:hover {
-  background: var(--secondary-light);
+  background: var(--secondary-light) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Кнопки админки */
+.dark-theme .btn-add {
+  background: #388e3c !important;
+}
+
+.dark-theme .btn-remove {
+  background: #d32f2f !important;
 }
 
 /* Прогресс-бары */
 .dark-theme progress {
   accent-color: var(--secondary-light);
+  background: #333;
+  border-color: var(--border-dark);
+}
+
+.dark-theme progress::-webkit-progress-bar {
   background: #333;
 }
 
@@ -565,11 +596,66 @@ a[href="/admin"]:hover {
   background: var(--secondary-light);
 }
 
-/* Переключатель */
+.dark-theme .progress-bar {
+  background: #333;
+}
+
+.dark-theme .progress-fill {
+  background: var(--success-light);
+}
+
+/* Переключатель темы */
 .dark-theme .theme-toggle {
   background: #616161;
   color: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.dark-theme .theme-toggle:hover {
+  background: #757575;
+}
+
+/* Flash-сообщения */
+.dark-theme .flash {
+  background: #ffeb3b;
+  color: #111;
+}
+
+/* Текст */
+.dark-theme .status-achieved,
+.dark-theme .status-cell .status-achieved {
+  color: var(--success-light) !important;
+}
+
+.dark-theme .status-pending,
+.dark-theme .status-cell .status-pending {
+  color: var(--text-lighter) !important;
+}
+
+/* Разделители */
+.dark-theme hr,
+.dark-theme .divider {
+  border-color: var(--border-dark) !important;
+}
+
+/* Сброс для любых белых блоков */
+.dark-theme * {
+  background: var(--bg-panel) !important;
+  color: var(--text) !important;
+  border-color: var(--border-dark) !important;
+}
+
+/* Но верни фон body один раз */
+.dark-theme {
+  background: var(--bg-dark) !important;
+}
+.dark-theme * {
+  background: var(--bg-panel) !important;
+}
+.dark-theme .dark-theme,
+.dark-theme body,
+.dark-theme html {
+  background: var(--bg-dark) !important;
 }
 
 /* ==================== */
@@ -677,3 +763,4 @@ a[href="/admin"]:hover {
     font-size: 12px;
   }
 }
+
