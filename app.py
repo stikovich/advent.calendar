@@ -249,22 +249,6 @@ def get_reward_targets():
         ]
     }
 
-def get_reward_targets():
-    return {
-        'personal': [
-            {'type': 'xalava', 'name': 'Бесплатная позиция в магазине из предложенных', 'points': 555},
-            {'type': 'small', 'name': 'Маленький приз', 'points': 1276},
-            {'type': 'merch', 'name': 'Брелок (мерч)', 'points': 1444},
-            {'type': 'medium', 'name': 'Средний приз', 'points': 1651},
-            {'type': 'large', 'name': 'Большой приз', 'points': 2026},
-        ],
-        'global': [
-            {'type': 'sale', 'name': 'Б/У Aegis Hero 2 за 999р', 'points': 226},
-            {'type': 'xalava', 'name': 'Скидка 50% в магазине', 'points': 777},
-            {'type': 'certificate', 'name': 'Секретный приз', 'points': 1013},
-        ]
-    }
-
 def mark_day_as_opened(user_id, day):
     conn = get_db()
     try:
@@ -304,6 +288,50 @@ def inject_functions():
         'can_open': can_open_door,  # теперь можно использовать в шаблоне
         'now': datetime.now()  # чтобы использовать {{ now.year }}
     }
+
+def check_rewards(user_id, conn=None):
+    close_after = False
+    if conn is None:
+        conn = get_db()
+        close_after = True
+    try:
+        cursor = conn.cursor()
+
+        cursor.execute('SELECT free_points, paid_points FROM points WHERE user_id = %s', (user_id,))
+        row = cursor.fetchone()
+        personal_total = (row['free_points'] + row['paid_points']) if row else 0
+
+        cursor.execute('SELECT reward_type FROM rewards WHERE user_id = %s', (user_id,))
+        awarded = {r['reward_type'] for r in cursor.fetchall()}
+
+        # Призы за личные баллы
+        targets_personal = {
+            'xalava': 555,
+            'small': 1276,
+            'merch': 1444,
+            'medium': 1651,
+            'large': 2026
+        }
+        for r_type, points in targets_personal.items():
+            if personal_total >= points and r_type not in awarded:
+                cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (%s, %s, NOW())', (user_id, r_type))
+
+        # Общий счёт
+        current_global = get_global_points()
+
+        targets_global = {
+            'sale': 226,
+            'xalava': 777,
+            'certificate': 1013
+        }
+        for r_type, points in targets_global.items():
+            if current_global >= points and r_type not in awarded:
+                cursor.execute('INSERT INTO rewards (user_id, reward_type, awarded_at) VALUES (%s, %s, NOW())', (user_id, r_type))
+
+        conn.commit()
+    finally:
+        if close_after:
+            conn.close()
 
 # --- Маршруты ---
 @app.before_request
@@ -467,7 +495,8 @@ def admin_submissions():
 
 @app.route('/admin/approve/day/<int:sub_id>')
 def approve_day_submission(sub_id):
-    if not session.get('is_admin'): return redirect(url_for('login'))
+    if not session.get('is_admin'): 
+        return redirect(url_for('login'))
     
     conn = get_db()
     try:
@@ -493,7 +522,12 @@ def approve_day_submission(sub_id):
             add_points(sub['user_id'], sub['points_free'], 0)
             flash(f'✅ +{sub["points_free"]} личных, +{sub["points_global"]} общих.')
 
+        # Обновляем общий счёт
         add_to_global_points(sub['points_global'])
+        
+        # Проверяем призы — теперь и глобальные тоже раздаются!
+        check_rewards(sub['user_id'], conn)
+
         mark_day_as_opened(sub['user_id'], sub['day'])
         return redirect(url_for('admin_submissions'))
 
@@ -551,7 +585,7 @@ def admin():
         global_points=global_points,
         reward_targets=reward_targets
     )
-    
+
 @app.route('/admin/add_global', methods=['POST'])
 def add_global():
     if not session.get('is_admin'): return redirect(url_for('login'))
@@ -645,21 +679,9 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-try:
-    init_db()
-    print("✅ init_db() успешно выполнен")
-except Exception as e:
-    print(f"❌ Ошибка при инициализации БД: {e}")
-
 if __name__ == '__main__':
+    try:
+        init_db()
+    except Exception as e:
+        print(f"⚠️ Не удалось инициализировать БД: {e}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-
-
-
-
-
-
-
-
-
-
