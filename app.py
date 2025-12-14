@@ -392,11 +392,17 @@ def calendar():
 
     # Доступные дни
     now = datetime.now().date()
-    season_end = datetime(now.year, 12, 24).date()
-    available_days = {
-        day for day in range(1, 25)
-        if (datetime(now.year, 12, 1) + timedelta(days=day - 1)).date() <= now <= season_end
-    }
+
+    year_start = now.year if now.month == 12 else now.year - 1  # если январь — значит, начало было в прошлом году
+    season_start = datetime(year_start, 12, 15).date()
+    season_end = datetime(year_start + 1, 1, 14).date()  # 14 января следующего года
+
+    available_days = set()
+
+    for day in range(1, 32):
+        door_date = season_start + timedelta(days=day - 1)
+        if door_date <= now <= season_end:
+            available_days.add(day)
 
     reward_targets = get_reward_targets()
 
@@ -710,6 +716,7 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"⚠️ Не удалось инициализировать БД: {e}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
