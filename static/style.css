@@ -1,5 +1,9 @@
+/* =================================================================== */
+/*                      СТИЛИ ДЛЯ АДВЕНТ-КАЛЕНДАРЯ                     */
+/* =================================================================== */
+
 /* ==================== */
-/* 1. Глобальные переменные — единая цветовая система */
+/* 1. Глобальные переменные — контраст и доступность */
 /* ==================== */
 
 :root {
@@ -14,17 +18,32 @@
   --warning: #ff6f00;
   --text: #333;
   --text-light: #666;
-  --text-lighter: #ccc;
+  --text-lighter: #999;
   --bg-light: #f0f5ff;
   --bg-card: #ffffff;
-  --bg-dark: #1a1a1a;
-  --bg-panel: #2a2a2a;
+  --bg-dark: #121212;
+  --bg-panel: #1e1e1e;
   --border: #e0e0e0;
   --border-dark: #444;
   --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   --shadow-hover: 0 8px 15px rgba(0, 0, 0, 0.15);
   --radius: 12px;
   --transition: all 0.3s ease;
+}
+
+/* Тёмная тема — Высокая контрастность, читаемость */
+.dark-theme {
+  --bg-dark: #121212;
+  --bg-panel: #1e1e1e;
+  --text: #ffffff;
+  --text-light: #bbbbbb;
+  --text-lighter: #888888;
+  --border-dark: #444444;
+  --primary: #9575cd;
+  --primary-light: #333333;
+  --success-light: #81c784;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* ==================== */
@@ -218,10 +237,6 @@ textarea:focus {
   border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.3);
-}
-
-input[type="number"] {
-  width: 80px;
 }
 
 /* ==================== */
@@ -442,7 +457,6 @@ tr:hover {
   text-decoration: underline;
 }
 
-/* Админ-ссылка */
 a[href="/admin"] {
   color: var(--primary);
   text-decoration: none;
@@ -483,35 +497,60 @@ a[href="/admin"]:hover {
 }
 
 /* ==================== */
-/* 16. Тёмная тема — Полная, Гармоничная, Работающая */
+/* 16. Тёмная тема — Полная, Читаемая, Без Слияний */
 /* ==================== */
 
+/* Применяем переменные */
 .dark-theme {
   background: var(--bg-dark);
   color: var(--text);
 }
 
+/* Глобальные стили для тёмной темы */
+.dark-theme * {
+  background: var(--bg-panel) !important;
+  color: var(--text) !important;
+  border-color: var(--border-dark) !important;
+}
+
+/* Исключения: элементы с особым цветом */
+.dark-theme,
+.dark-theme body,
+.dark-theme html {
+  background: var(--bg-dark) !important;
+}
+
+.dark-theme .bg-transparent,
+.dark-theme .door {
+  background: var(--bg-panel) !important;
+}
+
+/* Текст с пониженной яркостью */
+.dark-theme .text-muted,
+.dark-theme small,
+.dark-theme .date,
+.dark-theme .status-pending,
+.dark-theme .text-lighter {
+  color: var(--text-lighter) !important;
+}
+
 /* Ссылки */
 .dark-theme a {
-  color: var(--secondary-light);
-  text-decoration: none;
+  color: var(--primary) !important;
 }
 
 .dark-theme a:hover {
-  color: #b39ddb;
+  color: #b39ddb !important;
   text-decoration: underline;
 }
 
-/* Карточки, блоки, контейнеры */
+/* Карточки и блоки */
 .dark-theme .card,
 .dark-theme .task,
-.dark-theme .door,
 .dark-theme .admin-container,
 .dark-theme main,
 .dark-theme header,
-.card .dark-theme,
 .dark-theme .form-inline,
-.dark-theme .flex,
 .dark-theme .download {
   background: var(--bg-panel) !important;
   border-color: var(--border-dark) !important;
@@ -520,21 +559,16 @@ a[href="/admin"]:hover {
 
 /* Таблицы */
 .dark-theme table {
-  background: var(--bg-panel);
-  color: var(--text);
+  background: var(--bg-panel) !important;
 }
 
-.dark-theme th,
-.dark-theme .card th {
-  background: #3c3c3c !important;
-  color: #fff;
-  border-bottom: 1px solid var(--border-dark);
+.dark-theme th {
+  background: #2d2d2d !important;
+  color: #fff !important;
 }
 
-.dark-theme td,
-.dark-theme .card td {
-  border-bottom: 1px solid var(--border-dark);
-  color: var(--text);
+.dark-theme td {
+  border-bottom: 1px solid var(--border-dark) !important;
 }
 
 /* Формы */
@@ -550,26 +584,22 @@ a[href="/admin"]:hover {
 
 .dark-theme input:focus,
 .dark-theme textarea:focus {
-  border-color: var(--secondary-light) !important;
+  border-color: var(--primary) !important;
   box-shadow: 0 0 0 2px rgba(149, 117, 205, 0.3) !important;
 }
 
 /* Кнопки */
 .dark-theme .btn,
 .dark-theme .btn-sm,
-.dark-theme .download-btn,
-.dark-theme .btn-add,
-.dark-theme .btn-remove {
+.dark-theme .download-btn {
   background: var(--secondary) !important;
   color: white !important;
-  border: none !important;
 }
 
 .dark-theme .btn:hover,
 .dark-theme .btn-sm:hover,
 .dark-theme .download-btn:hover {
   background: var(--secondary-light) !important;
-  transform: translateY(-2px) !important;
 }
 
 /* Кнопки админки */
@@ -583,28 +613,23 @@ a[href="/admin"]:hover {
 
 /* Прогресс-бары */
 .dark-theme progress {
-  accent-color: var(--secondary-light);
-  background: #333;
-  border-color: var(--border-dark);
-}
-
-.dark-theme progress::-webkit-progress-bar {
-  background: #333;
+  background: #333 !important;
+  border-color: var(--border-dark) !important;
 }
 
 .dark-theme progress::-webkit-progress-value {
-  background: var(--secondary-light);
+  background: var(--primary) !important;
 }
 
 .dark-theme .progress-bar {
-  background: #333;
+  background: #333 !important;
 }
 
 .dark-theme .progress-fill {
-  background: var(--success-light);
+  background: var(--success-light) !important;
 }
 
-/* Переключатель темы */
+/* Переключатель */
 .dark-theme .theme-toggle {
   background: #616161;
   color: #fff;
@@ -619,43 +644,6 @@ a[href="/admin"]:hover {
 .dark-theme .flash {
   background: #ffeb3b;
   color: #111;
-}
-
-/* Текст */
-.dark-theme .status-achieved,
-.dark-theme .status-cell .status-achieved {
-  color: var(--success-light) !important;
-}
-
-.dark-theme .status-pending,
-.dark-theme .status-cell .status-pending {
-  color: var(--text-lighter) !important;
-}
-
-/* Разделители */
-.dark-theme hr,
-.dark-theme .divider {
-  border-color: var(--border-dark) !important;
-}
-
-/* Сброс для любых белых блоков */
-.dark-theme * {
-  background: var(--bg-panel) !important;
-  color: var(--text) !important;
-  border-color: var(--border-dark) !important;
-}
-
-/* Но верни фон body один раз */
-.dark-theme {
-  background: var(--bg-dark) !important;
-}
-.dark-theme * {
-  background: var(--bg-panel) !important;
-}
-.dark-theme .dark-theme,
-.dark-theme body,
-.dark-theme html {
-  background: var(--bg-dark) !important;
 }
 
 /* ==================== */
@@ -708,10 +696,6 @@ a[href="/admin"]:hover {
     padding: 20px;
   }
 
-  header h1 {
-    font-size: 24px;
-  }
-
   h2 {
     font-size: 22px;
   }
@@ -747,9 +731,7 @@ a[href="/admin"]:hover {
     justify-content: center;
   }
 
-  table,
-  th,
-  td {
+  table, th, td {
     font-size: 13px;
     padding: 8px 5px;
   }
@@ -763,4 +745,3 @@ a[href="/admin"]:hover {
     font-size: 12px;
   }
 }
-
