@@ -178,73 +178,160 @@
       font-size: 14px;
     }
 
-      .theme-toggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #f0f0f0;
-    color: #333;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-  }
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
 
-  .theme-toggle:hover {
-    background: #e0e0e0;
-  }
+.theme-toggle:hover {
+  background: #e0e0e0;
+  transform: scale(1.05);
+}
 
-  .dark-theme .theme-toggle {
-    background: #616161;
-    color: #fff;
-  }
+.dark-theme .theme-toggle {
+  background: #616161;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
 
-  /* Тёмная тема */
-  .dark-theme {
-    background: #121212;
-    color: #e0e0e0;
-  }
+/* Тёмная тема — мягкие, гармоничные цвета */
+.dark-theme {
+  background: #1a1a1a;
+  color: #e0e0e0;
+}
 
-  .dark-theme a {
-    color: #bb86fc;
-  }
+.dark-theme a {
+  color: #9575cd;
+  text-decoration: none;
+}
 
-  .dark-theme .card,
-  .dark-theme table,
-  .dark-theme input,
-  .dark-theme .form-inline {
-    background: #1e1e1e;
-    border-color: #333;
-    color: #fff;
-  }
+.dark-theme a:hover {
+  color: #b39ddb;
+  text-decoration: underline;
+}
 
-  .dark-theme th {
-    background: #2d2d2d !important;
-    color: #eee;
-  }
+/* Контейнеры, карточки, формы */
+.dark-theme .card,
+.dark-theme .task,
+.dark-theme .calendar,
+.dark-theme table,
+.dark-theme input,
+.dark-theme textarea,
+.dark-theme .form-inline,
+.dark-theme .door {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #f0f0f0;
+  transition: background 0.3s ease, border 0.3s ease;
+}
 
-  .dark-theme hr {
-    border-color: #333;
-  }
+/* Таблицы */
+.dark-theme table {
+  border-collapse: collapse;
+  width: 100%;
+}
 
-  .dark-theme .btn, 
-  .dark-theme .btn-sm {
-    background: #6200ea;
-    color: white;
-  }
+.dark-theme th {
+  background: #3c3c3c !important;
+  color: #fff;
+  font-weight: 600;
+  padding: 10px;
+  text-align: left;
+}
 
-  .dark-theme .status-pending {
-    color: #666;
-  }
+.dark-theme td {
+  padding: 10px;
+  border-bottom: 1px solid #444;
+}
 
+/* Input и формы */
+.dark-theme input,
+.dark-theme textarea {
+  background: #333;
+  color: #fff;
+  border: 1px solid #555;
+}
+
+.dark-theme input:focus,
+.dark-theme textarea:focus {
+  border-color: #9575cd;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(149, 117, 205, 0.3);
+}
+
+/* Кнопки */
+.dark-theme .btn,
+.dark-theme .btn-sm,
+.dark-theme .download-btn {
+  background: #7e57c2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  transition: background 0.3s ease;
+}
+
+.dark-theme .btn:hover,
+.dark-theme .btn-sm:hover,
+.dark-theme .download-btn:hover {
+  background: #9575cd;
+}
+
+/* Статусы */
+.dark-theme .status-achieved {
+  color: #81c784;
+}
+
+.dark-theme .status-pending {
+  color: #78909c;
+}
+
+/* Прогресс-бары */
+.dark-theme progress {
+  accent-color: #9575cd;
+}
+
+.dark-theme progress::-webkit-progress-bar {
+  background: #333;
+  border-radius: 4px;
+}
+
+.dark-theme progress::-webkit-progress-value {
+  background: #9575cd;
+  border-radius: 4px;
+}
+
+/* Разделители */
+.dark-theme hr,
+.dark-theme .divider {
+  border-color: #444;
+}
+
+/* Тени и границы */
+.dark-theme .card,
+.dark-theme .task {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid #444;
+}
+
+/* Плавность везде */
+* {
+  transition: background 0.3s ease, color 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
+}
     @media (max-width: 600px) {
       .container {
         padding: 15px;
@@ -327,4 +414,5 @@
   </div>
 </body>
 </html>
+
 
