@@ -250,6 +250,10 @@ def get_reward_targets():
     }
 
 def mark_day_as_opened(user_id, day):
+    # Защита: только дни от 1 до 31 (новая система)
+    if day < 1 or day > 31:
+        return False  # или выбрось ошибку
+
     conn = get_db()
     try:
         cursor = conn.cursor()
@@ -259,6 +263,7 @@ def mark_day_as_opened(user_id, day):
             ON CONFLICT (user_id, day) DO NOTHING
         ''', (user_id, day))
         conn.commit()
+        return True
     finally:
         conn.close()
 
@@ -705,6 +710,7 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"⚠️ Не удалось инициализировать БД: {e}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
