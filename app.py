@@ -424,7 +424,7 @@ def calendar():
 
 @app.route('/day/<int:day>', methods=['GET', 'POST'])
 def view_day(day):
-    if day < 1 or day > 24:
+    if day < 1 or day > 31:
         flash('Нет такого дня.')
         return redirect(url_for('calendar'))
     user_id = session.get('user_id')
@@ -716,6 +716,7 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"⚠️ Не удалось инициализировать БД: {e}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
