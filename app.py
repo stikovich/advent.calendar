@@ -271,29 +271,26 @@ def can_open_door(day):
     if day < 1 or day > 31:
         return False
 
-    now = datetime.now()
-    year = now.year
-    # Если январь и дата <= 14, значит, квест в "следующем году"
-    quest_year_start = year if now.month == 12 else year - 1
-    quest_year_end = year if now.month == 12 else year
+    today = date.today()  # только дата, без времени
 
-    # День 1 = 15 декабря текущего (или прошлого) года
-    day_one = datetime(quest_year_start, 12, 15)
+    # Определяем год начала сезона
+    quest_year_start = today.year if today.month == 12 else today.year - 1
 
-    # Рассчитываем дату двери
-    door_date = day_one + timedelta(days=day - 1)
+    # Дата начала и конца сезона
+    season_start = date(quest_year_start, 12, 15)
+    season_end = date(quest_year_start + 1, 1, 14)
 
-    # Диапазон квеста: 15 декабря – 14 января
-    season_start = datetime(quest_year_start, 12, 15)
-    season_end = datetime(quest_year_end, 1, 14)
+    # Дата открытия двери
+    door_date = season_start + timedelta(days=day - 1)
 
-    # Проверяем: дверь не раньше сегодня, и дата в пределах сезона
-    return season_start <= door_date <= now <= season_end
+    return door_date <= today <= season_end
 
 def get_calendar_days():
     days = []
-    start = datetime(datetime.now().year, 12, 15)
-    
+    today = date.today()
+    quest_year = today.year if today.month == 12 else today.year - 1
+    start = date(quest_year, 12, 15)
+
     for i in range(31):
         current = start + timedelta(days=i)
         if current.month == 12:
@@ -301,7 +298,6 @@ def get_calendar_days():
         else:
             date_str = f'{current.day} января'
         days.append({'day': i + 1, 'date': date_str})
-    
     return days
 
 def allowed_file(filename):
@@ -716,6 +712,7 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"⚠️ Не удалось инициализировать БД: {e}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
