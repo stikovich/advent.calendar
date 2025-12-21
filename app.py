@@ -240,6 +240,7 @@ def get_reward_targets():
             {'type': 'small', 'name': 'Маленький приз', 'points': 1276},
             {'type': 'merch', 'name': 'Брелок (мерч)', 'points': 1444},
             {'type': 'medium', 'name': 'Средний приз', 'points': 1651},
+            {'type': 'dostavka', 'name': 'Бесплатная доставка при получении приза', 'points': 1888},
             {'type': 'large', 'name': 'Большой приз', 'points': 2026},
         ],
         'global': [
@@ -331,6 +332,7 @@ def check_rewards(user_id, conn=None):
             'small': 1276,
             'merch': 1444,
             'medium': 1651,
+            'dostavka': 1888,
             'large': 2026
         }
         for r_type, points in targets_personal.items():
@@ -712,6 +714,7 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"⚠️ Не удалось инициализировать БД: {e}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
