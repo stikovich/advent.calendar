@@ -464,7 +464,7 @@ def view_day(day):
                 if file and allowed_file(file.filename):
                     filename = secure_filename(f"day{day}_user{user_id}_{file.filename}")
                     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    file_url = f"uploads/{filename}"
+                    file_url = filename
                 else:
                     flash('Некорректный файл.')
                     return redirect(url_for('view_day', day=day))
@@ -719,6 +719,7 @@ except Exception as e:
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
