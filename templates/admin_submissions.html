@@ -32,12 +32,18 @@
         {% endif %}
       </td>
       <td>
-        {% if s.file_url %}
-          <a href="{{ url_for('static', filename='uploads/' + s.file_url) }}" target="_blank">📄 Посмотреть файл</a>
-        {% elif s.text_response %}
-          <div style="white-space: pre-wrap; max-width: 300px;">{{ s.text_response }}</div>
-        {% endif %}
-      </td>
+  {% if s.file_url %}
+    {% if s.response_type == 'file' %}
+      <a href="{{ url_for('static', filename='uploads/' + s.file_url) }}" target="_blank">📄 Посмотреть файл</a>
+    {% else %}
+      <div style="white-space: pre-wrap; max-width: 300px;">{{ s.text_response }}</div>
+    {% endif %}
+  {% elif s.text_response %}
+    <div style="white-space: pre-wrap; max-width: 300px;">{{ s.text_response }}</div>
+  {% else %}
+    <em>Нет ответа</em>
+  {% endif %}
+</td>
       <td>
         {% if s.is_paid %}
           +{{ s.points_free }} платных
@@ -70,6 +76,7 @@
 
 <a href="/admin" class="btn btn-outline">← Назад в админку</a>
 {% endblock %}
+
 
 
 
