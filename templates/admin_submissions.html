@@ -33,7 +33,7 @@
       </td>
       <td>
         {% if s.file_url %}
-          <a href="{{ url_for('static', filename=s.file_url) }}" target="_blank">📄 Посмотреть файл</a>
+          <a href="{{ url_for('static', filename='uploads/' + s.file_url) }}" target="_blank">📄 Посмотреть файл</a>
         {% elif s.text_response %}
           <div style="white-space: pre-wrap; max-width: 300px;">{{ s.text_response }}</div>
         {% endif %}
@@ -70,5 +70,6 @@
 
 <a href="/admin" class="btn btn-outline">← Назад в админку</a>
 {% endblock %}
+
 
 
