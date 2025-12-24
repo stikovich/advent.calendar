@@ -502,7 +502,7 @@ def admin_submissions():
         cursor = conn.cursor()
         cursor.execute('''
             SELECT s.id, s.user_id, s.day, s.file_url, s.text_response, s.submitted_at, s.status,
-                   u.username, t.title, t.points_free, t.points_global, t.is_paid
+                   u.username, t.title, t.points_free, t.points_global, t.is_paid, t.response_type
             FROM submissions_day s
             JOIN users u ON s.user_id = u.id
             JOIN tasks t ON s.day = t.day
@@ -510,10 +510,9 @@ def admin_submissions():
         ''')
         raw_submissions = cursor.fetchall()
         
-        # Преобразуем каждую строку в обычный dict и добавляем formatted date
         submissions = []
         for row in raw_submissions:
-            sub = dict(row)  # ✅ Превращаем DictRow в обычный словарь
+            sub = dict(row)
             sub['submitted_at_str'] = (
                 row['submitted_at'].strftime('%Y-%m-%d %H:%M') 
                 if row['submitted_at'] else '-'
@@ -720,6 +719,7 @@ except Exception as e:
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
 
 
 
