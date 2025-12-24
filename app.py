@@ -711,12 +711,17 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+# Запуск инициализации БД при старте приложения
+try:
+    init_db()
+    print("✅ База данных инициализирована.")
+except Exception as e:
+    print(f"❌ Ошибка инициализации БД: {e}")
+
 if __name__ == '__main__':
-    try:
-        init_db()
-    except Exception as e:
-        print(f"⚠️ Не удалось инициализировать БД: {e}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
+
 
 
 
